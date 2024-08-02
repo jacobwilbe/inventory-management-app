@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
 import { firestore } from '@/firebase'
+import { Analytics } from "@vercel/analytics/react"
 import {
   collection,
   doc,
@@ -86,6 +87,7 @@ export default function Home() {
 
 
   return (
+    
     <Box 
       width="100vw"
       height="100vh"
@@ -95,6 +97,7 @@ export default function Home() {
       alignItems={'center'}
       gap={2}
     >
+      <Analytics mode={'production'} />;
       <Modal
         open={open}
         onClose={handleClose}

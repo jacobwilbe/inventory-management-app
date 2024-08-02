@@ -36,6 +36,7 @@ export default function Home() {
   const [open, setOpen] = useState(false)
   const [itemName, setItemName] = useState('')
 
+
   // fetch inventory data from firestone
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, 'inventory'))
@@ -85,7 +86,7 @@ export default function Home() {
 
 
   return (
-    <Box
+    <Box 
       width="100vw"
       height="100vh"
       display={'flex'}
@@ -139,7 +140,7 @@ export default function Home() {
           alignItems={'center'}
         >
           <Typography variant={'h2'} color={'#333'} textAlign={'center'}>
-            Inventory Items
+            Inventory
           </Typography>
         </Box>
         <Stack width="800px" height="300px" spacing={2} overflow={'auto'}>
@@ -162,6 +163,9 @@ export default function Home() {
               </Typography>
               <Button variant="contained" onClick={() => removeItem(name)}>
                 Remove
+              </Button>
+              <Button variant="contained" onClick={() => addItem(name)}>
+                Add
               </Button>
             </Box>
           ))}

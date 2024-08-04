@@ -122,7 +122,7 @@ export default function Home() {
         alignItems="center"
         padding = {4}
       >
-        <Analytics id="G-1ZQZQZQZQZ" />
+        <Analytics mode={'production'} />
         <Typography variant="h2" textAlign="center" marginBottom={4} color={'white'}>
           Pantry
         </Typography>

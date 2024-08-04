@@ -1,9 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent, createTheme, ThemeProvider   } from '@mui/material'
+import { styled } from '@mui/material/styles';
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
+import Autocomplete from '@mui/material/Autocomplete';
+import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import Image from 'next/image';
 import {
   collection,
   doc,
@@ -34,9 +38,19 @@ const style = {
 export default function Home() {
   // We'll add our component logic here
   const [inventory, setInventory] = useState([])
-  const [open, setOpen] = useState(false)
+  const [open, setAddOpen] = useState(false)
+  const [SearchOpen, setSearchOpen] = useState(false)
   const [itemName, setItemName] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [expirationDate, setExpirationDate] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [editOpen, setEditOpen] = useState(false)
 
+  const handleSearch = async () => {
+    setAddOpen(true)
+    setSearchOpen(false)
+    setItemName(searchQuery)
+  }
 
   // fetch inventory data from firestone
   const updateInventory = async () => {
@@ -51,129 +65,221 @@ export default function Home() {
   
   useEffect(() => {
     updateInventory()
-  }, [])
+  }, []);
 
   //add item to inventory
-  const addItem = async (item) => {
+  const addItem = async (item, quantity, expirationDate) => {
     const docRef = doc(collection(firestore, 'inventory'), item)
     const docSnap = await getDoc(docRef)
-    if (docSnap.exists()) {
-      const { quantity } = docSnap.data()
-      await setDoc(docRef, { quantity: quantity + 1 })
+    if (docSnap.exists() && editOpen === false) {
+      const data  = docSnap.data()
+      await setDoc(docRef, {quantity: quantity + Number(data.quantity), expirationDate: expirationDate})
     } else {
-      await setDoc(docRef, { quantity: 1 })
+      await setDoc(docRef,{quantity: Number(quantity), expirationDate: expirationDate})
     }
     await updateInventory()
   }
 
+
   //remove item from inventory
-  const removeItem = async (item) => {
+  const removeItem = async (item, quantity, expirationDate) => {
     const docRef = doc(collection(firestore, 'inventory'), item)
     const docSnap = await getDoc(docRef)
     if (docSnap.exists()) {
-      const { quantity } = docSnap.data()
-      if (quantity === 1) {
+      if (quantity <= 1 ) {
         await deleteDoc(docRef)
       } else {
-        await setDoc(docRef, { quantity: quantity - 1 })
+        await setDoc(docRef, { quantity: quantity - 1, expirationDate: expirationDate })
       }
     }
     await updateInventory()
   }
    
   //manage the modal state
-  const handleOpen = () => setOpen(true)
-  const handleClose = () => setOpen(false)
+  const handleOpenAdd = () => setAddOpen(true)
+  const handleOpenSearch = () => setSearchOpen(true)
+  const handleClose = () => setAddOpen(false)
+  const handleSearchClose = () => setSearchOpen(false)
+  const handleOpenEdit = (name, quantity, expirationDate) => () => {
+    setItemName(name)
+    setQuantity(quantity)
+    setExpirationDate(expirationDate)
+    setEditOpen(true)
+  }
+  const handleEditClose = () => setEditOpen(false)
+
+  
+
+
+  
 
 
   return (
-    
-    <Box 
-      width="100vw"
-      height="100vh"
-      display={'flex'}
-      justifyContent={'center'}
-      flexDirection={'column'}
-      alignItems={'center'}
-      gap={2}
-    >
-      <Analytics mode={'production'} />;
-      <Modal
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
+
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        padding = {4}
       >
-        <Box sx={style}>
-          <Typography id="modal-modal-title" variant="h6" component="h2">
+        <Typography variant="h2" textAlign="center" marginBottom={4} color={'white'}>
+          Pantry
+        </Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="left" marginBottom={4} >
+          <Autocomplete color='white'
+            options={inventory.map(item => ({ label: item.name }))}
+            getOptionLabel={(option) => option.label}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Search"
+                variant="outlined"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{
+                  marginRight: 50,
+                  width: 400,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: 'white',
+                    color: 'grey',
+                    '& fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'white',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'white',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'grey',
+                  },
+                }}
+              />
+            )}
+            onChange={(_, newValue) => {
+              setSearchQuery(newValue ? newValue.label : '');
+            }}
+          />
+          <Button variant="contained" color="primary" onClick={handleOpenAdd} startIcon={<AddIcon />} sx={{marginLeft: 50}}>
             Add Item
-          </Typography>
-          <Stack width="100%" direction={'row'} spacing={2}>
-            <TextField
-              id="outlined-basic"
-              label="Item"
-              variant="outlined"
-              fullWidth
-              value={itemName}
-              onChange={(e) => setItemName(e.target.value)}
-            />
-            <Button
-              variant="outlined"
-              onClick={() => {
-                addItem(itemName)
-                setItemName('')
-                handleClose()
-              }}
-            >
-              Add
-            </Button>
-          </Stack>
+          </Button>
         </Box>
-      </Modal>
-      <Button variant="contained" onClick={handleOpen}>
-        Add New Item
-      </Button>
-      <Box border={'1px solid #333'}>
-        <Box
-          width="800px"
-          height="100px"
-          bgcolor={'#ADD8E6'}
-          display={'flex'}
-          justifyContent={'center'}
-          alignItems={'center'}
-        >
-          <Typography variant={'h2'} color={'#333'} textAlign={'center'}>
-            Inventory
-          </Typography>
-        </Box>
-        <Stack width="800px" height="300px" spacing={2} overflow={'auto'}>
-          {inventory.map(({name, quantity}) => (
-            <Box
-              key={name}
-              width="100%"
-              minHeight="150px"
-              display={'flex'}
-              justifyContent={'space-between'}
-              alignItems={'center'}
-              bgcolor={'#f0f0f0'}
-              paddingX={5}
-            >
-              <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-                {name.charAt(0).toUpperCase() + name.slice(1)}
-              </Typography>
-              <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
-                Quantity: {quantity}
-              </Typography>
-              <Button variant="contained" onClick={() => removeItem(name)}>
-                Remove
-              </Button>
-              <Button variant="contained" onClick={() => addItem(name)}>
+        <Modal open={open} onClose={handleClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Add Item
+            </Typography>
+            <Stack spacing={2} mt={2}>
+              <TextField
+                label="Name"
+                variant="outlined"
+                fullWidth
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+              />
+              <TextField
+                label="Quantity"
+                variant="outlined"
+                fullWidth
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+              />
+              <TextField
+                label="Expiration Date"
+                variant="outlined"
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  addItem(itemName, quantity, expirationDate)
+                  setQuantity(1)
+                  setExpirationDate('') 
+                  setItemName('')
+                  handleClose()
+                }}
+              >
                 Add
               </Button>
-            </Box>
+            </Stack>
+          </Box>
+        </Modal>
+
+        <Modal open={editOpen} onClose={handleEditClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Edit {itemName}
+            </Typography>
+            <Stack spacing={2} mt={2}>
+              <TextField
+                label="Quantity"
+                variant="outlined"
+                fullWidth
+                value={quantity}
+                onChange={(e) => setQuantity(Number(e.target.value))}
+              />
+              <TextField
+                label="Expiration Date"
+                variant="outlined"
+                fullWidth
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                value={expirationDate}
+                onChange={(e) => setExpirationDate(e.target.value)}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  addItem(itemName, quantity, expirationDate)
+                  setQuantity(1)
+                  setExpirationDate('') 
+                  setItemName('')
+                  handleEditClose()
+                }}
+              >
+                Edit
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        <Box display="flex" flexWrap="wrap" gap={2} >
+          {inventory.map(({name, quantity, expirationDate}) => (
+            <Card key={name} sx={{ width: 250 }}>
+              <CardContent>
+                <Typography variant="h6">{name}</Typography>
+                <Image 
+                  alt={`${name} image`} 
+                  layout="responsive" 
+                  width={200} 
+                  height={140} 
+                  style={{ marginTop: '50px', marginBottom: '50px' }} 
+                />
+                <Typography variant="body2" color="textSecondary">
+                  <strong>Expiration Date:</strong> <br /> {expirationDate}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  <strong>Quantity:</strong> {quantity}
+                </Typography>
+                <Box display="flex" justifyContent="space-between" marginTop={2}>
+                  <IconButton color="primary" onClick={handleOpenEdit(name, quantity, expirationDate)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton color="secondary" onClick={() => removeItem(name, quantity, expirationDate)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Stack>
+        </Box>
       </Box>
-    </Box>
   )
 }

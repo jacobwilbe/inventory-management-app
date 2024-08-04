@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent, createTheme, ThemeProvider   } from '@mui/material'
-import { styled } from '@mui/material/styles';
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent   } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
 import Autocomplete from '@mui/material/Autocomplete';
@@ -39,7 +38,6 @@ export default function Home() {
   // We'll add our component logic here
   const [inventory, setInventory] = useState([])
   const [open, setAddOpen] = useState(false)
-  const [SearchOpen, setSearchOpen] = useState(false)
   const [itemName, setItemName] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [expirationDate, setExpirationDate] = useState('');
@@ -47,9 +45,11 @@ export default function Home() {
   const [editOpen, setEditOpen] = useState(false)
 
   const handleSearch = async () => {
-    setAddOpen(true)
-    setSearchOpen(false)
     setItemName(searchQuery)
+    setQuantity(inventory.find(item => item.name === searchQuery).quantity)
+    setExpirationDate(inventory.find(item => item.name === searchQuery).expirationDate)
+    setEditOpen(true)
+    setSearchQuery('')
   }
 
   // fetch inventory data from firestone
@@ -97,9 +97,8 @@ export default function Home() {
    
   //manage the modal state
   const handleOpenAdd = () => setAddOpen(true)
-  const handleOpenSearch = () => setSearchOpen(true)
   const handleClose = () => setAddOpen(false)
-  const handleSearchClose = () => setSearchOpen(false)
+
   const handleOpenEdit = (name, quantity, expirationDate) => () => {
     setItemName(name)
     setQuantity(quantity)
@@ -123,10 +122,12 @@ export default function Home() {
         alignItems="center"
         padding = {4}
       >
+        <Analytics id="G-1ZQZQZQZQZ" />
         <Typography variant="h2" textAlign="center" marginBottom={4} color={'white'}>
           Pantry
         </Typography>
         <Box display="flex" justifyContent="space-between" alignItems="left" marginBottom={4} >
+          <Button variant="contained" color="primary" onClick={handleSearch} startIcon={<SearchIcon />}/>
           <Autocomplete color='white'
             options={inventory.map(item => ({ label: item.name }))}
             getOptionLabel={(option) => option.label}

@@ -63,6 +63,7 @@ export default function Home() {
   const [expirationDate, setExpirationDate] = useState(today);
   const [quantity, setQuantity] = useState(1);
   const [editOpen, setEditOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const handleSearch = async () => {
     setItemName(searchQuery)
@@ -119,6 +120,8 @@ export default function Home() {
   //manage the modal state
   const handleOpenAdd = () => setAddOpen(true)
   const handleClose = () => setAddOpen(false)
+  const handleSearchClose = () => setSearchOpen(false)
+  const handleSearchOpen = () => setSearchOpen(true)
 
   const handleOpenEdit = (name, quantity, expirationDate) => () => {
     setItemName(name)
@@ -126,10 +129,13 @@ export default function Home() {
     setExpirationDate(expirationDate)
     setEditOpen(true)
   }
-  const handleEditClose = () => setEditOpen(false)  
-
+  const handleEditClose = () => {
+    setEditOpen(false)  
+    setItemName('')
+  }
   const handleDelete = async (item) => {
     const docRef = doc(collection(firestore, 'inventory'), item)
+    setItemName('')
     await deleteDoc(docRef)
     await updateInventory()
   }
@@ -142,65 +148,43 @@ export default function Home() {
 
   return (
     <ThemeProvider theme={theme}>
+
       <CssBaseline />
+
       <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="center"
-        alignItems="center"
-        padding={4}
+        sx = {{
+          display:"flex",
+          flexDirection:"column",
+          justifyContent:"center",
+          alignItems:"center",
+          padding:"4",
+        }}
       >
         <Analytics mode={'production'} />
-        <Typography variant="h2" textAlign="center" marginBottom={4} color={'white'}>
-          Pantry Inventory
-        </Typography>
-        <Grid container spacing={2} justifyContent="space-between" alignItems="center" marginBottom={4}>
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 3,
+            justifyContent: 'center',
+            marginBottom: 5,
+            marginTop: 5
+          }} 
+        >
           <Grid item xs={12} sm={4}>
-            <Button variant="contained" color="primary" onClick={handleSearch} startIcon={<SearchIcon />} fullWidth />
+            <Button variant="contained" color="primary" onClick={handleSearchOpen} startIcon={<SearchIcon />} fullWidth > Search </Button>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Autocomplete
-              options={inventory.map(item => ({ label: item.name }))}
-              getOptionLabel={(option) => option.label}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Search"
-                  variant="outlined"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  sx={{
-                    width: '100%',
-                    '& .MuiOutlinedInput-root': {
-                      backgroundColor: 'white',
-                      color: 'grey',
-                      '& fieldset': {
-                        borderColor: 'white',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: 'white',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: 'white',
-                      },
-                    },
-                    '& .MuiInputLabel-root': {
-                      color: 'grey',
-                    },
-                  }}
-                />
-              )}
-              onChange={(_, newValue) => {
-                setSearchQuery(newValue ? newValue.label : '');
-              }}
-            />
+          <Grid sx={{justifyContent:'center'}} item xs={12} sm={4}>
+              <Typography variant="h4" align="center">Inventory</Typography>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Button variant="contained" color="primary" onClick={handleOpenAdd} startIcon={<AddIcon />} fullWidth>
               Add Item
             </Button>
           </Grid>
-        </Grid>
+        </Box>
         <Modal open={open} onClose={handleClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
@@ -241,6 +225,42 @@ export default function Home() {
                 }}
               >
                 Add
+              </Button>
+            </Stack>
+          </Box>
+        </Modal>
+
+        <Modal open={searchOpen} onClose={handleSearchClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+          <Box sx={style}>
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Search Inventory
+            </Typography>
+            <Stack spacing={2} mt={2} direction={"row"}>
+              <Autocomplete
+                sx = {{width : "100%"}}
+                options={inventory.map(item => ({ label: item.name }))}
+                getOptionLabel={(option) => option.label}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Search"
+                    variant="outlined"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                )}
+                onChange={(_, newValue) => {
+                  setSearchQuery(newValue ? newValue.label : '');
+                }}
+              />
+              <Button
+                variant="outlined"
+                onClick={() => {
+                    handleSearch()
+                    setSearchOpen(false)
+                }}
+              >
+                Search
               </Button>
             </Stack>
           </Box>
@@ -294,10 +314,18 @@ export default function Home() {
           </Box>
         </Modal>
 
-        <Grid container spacing={2} justifyContent="flex-start" alignItems="center" marginLeft={1}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            gap: 3,
+          }}
+        >
           {inventory.map(({ name, quantity, expirationDate }) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={name}>
-              <Card sx={{ width: '75%' }}>
+            <Box key={name}>
+              <Card sx = {{width: '275px'}}>
                 <CardHeader title={name} />
                 <CardMedia alt={name} component="img" height="194" />
                 <CardContent>
@@ -317,9 +345,9 @@ export default function Home() {
                   </IconButton>
                 </CardActions>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </Box>
     </ThemeProvider>
 

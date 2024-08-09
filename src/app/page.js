@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent, CssBaseline , Grid  } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent, CssBaseline , AppBar, Toolbar  } from '@mui/material'
 import CardHeader from '@mui/material/CardHeader';
 import CardMedia from '@mui/material/CardMedia';
 import { firestore } from '@/firebase'
@@ -10,6 +10,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import CardActions from '@mui/material/CardActions';
 import {createTheme, ThemeProvider} from '@mui/material/styles';
+import AccountCircle from '@mui/icons-material/AccountCircle';
 
 export const themeOptions = {
   palette: {
@@ -64,6 +65,7 @@ export default function Home() {
   const [quantity, setQuantity] = useState(1);
   const [editOpen, setEditOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const handleSearch = async () => {
     setItemName(searchQuery)
@@ -73,6 +75,15 @@ export default function Home() {
     setEditOpen(true)
     
   }
+
+
+  //handle drop doown menu
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleElClose = () => {
+    setAnchorEl(null);
+  };
 
   // fetch inventory data from firestone
   const updateInventory = async () => {
@@ -151,40 +162,36 @@ export default function Home() {
 
       <CssBaseline />
 
-      <Box
-        sx = {{
-          display:"flex",
-          flexDirection:"column",
-          justifyContent:"center",
-          alignItems:"center",
-          padding:"4",
-        }}
-      >
-        <Analytics mode={'production'} />
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 3,
-            justifyContent: 'center',
-            marginBottom: 5,
-            marginTop: 5
-          }} 
-        >
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" color="primary" onClick={handleSearchOpen} startIcon={<SearchIcon />} fullWidth > Search </Button>
-          </Grid>
-          <Grid sx={{justifyContent:'center'}} item xs={12} sm={4}>
-              <Typography variant="h4" align="center">Inventory</Typography>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Button variant="contained" color="primary" onClick={handleOpenAdd} startIcon={<AddIcon />} fullWidth>
+      <Box sx={{ flexDirection: 'column' , minHeight: '100vh', display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: theme.palette.background.default,
+        color: theme.palette.text.primary,
+        transition: 'background-color 0.2s ease-out'
+      }}>
+        <AppBar position="fixed" color="primary">
+          <Toolbar align="center">
+            <Button variant="contained" color="primary" onClick={handleSearchOpen} startIcon={<SearchIcon />} > Search </Button>
+            <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+              Pantry <span style={{ color: theme.palette.secondary.main }}>AI</span>
+            </Typography>
+            <Button variant="contained" color="primary" onClick={handleOpenAdd} startIcon={<AddIcon />} >
               Add Item
             </Button>
-          </Grid>
-        </Box>
+            <IconButton
+              size = "large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="inherit" 
+            >
+              <AccountCircle />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
+        <Analytics mode={'production'} />
         <Modal open={open} onClose={handleClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
@@ -316,11 +323,13 @@ export default function Home() {
 
         <Box
           sx={{
+            flexGrow: 1,
             display: 'flex',
             flexDirection: 'row',
             flexWrap: 'wrap',
             justifyContent: 'center',
             gap: 3,
+            marginTop: 50
           }}
         >
           {inventory.map(({ name, quantity, expirationDate }) => (

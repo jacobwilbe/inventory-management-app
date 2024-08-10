@@ -364,13 +364,6 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
-require('dotenv').config();
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-})
-
 
 export default function Home() {
   // We'll add our component logic here
@@ -611,6 +604,7 @@ export default function Home() {
           canvas.height = video.videoHeight;
           canvas.getContext('2d').drawImage(video, 0, 0);
           const imageData = canvas.toDataURL('image/jpeg');
+          testAPI();
          classifyImage(imageData);
         }
       }, 5000);
@@ -632,33 +626,35 @@ export default function Home() {
       setCameraOpen(false);
     }
   };
+  async function testAPI() {
+    try {
+      const response = await fetch('/api/test');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      console.log("Test API response:", data);
+    } catch (error) {
+      console.error("Error testing API:", error.message);
+    }
+  }
   
   async function classifyImage(imageData) {
     try {
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              {type: "text", text: 'Classify the item in the image in 1-2 words'},
-              {
-                type: 'image_url', 
-                image_url: {
-                  url: imageData
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 300,
+      const response = await fetch('/api/classify-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageData }),
       });
-  
-      const classification = response.choices[0].message.content;
-      console.log("Classification:", classification);
-      setClass(classification);
-      // You might want to update state or perform some action with the classification
-      // For example: addItem(classification, 1, today);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      const data = await response.json();
+      console.log("Classification:", data.classification);
+      setClass(data.classification);
     } catch (error) {
       console.error("Error classifying image:", error);
     }
@@ -988,7 +984,9 @@ export default function Home() {
               <EnhancedTableToolbar numSelected={selected.length} removals={selected} handleDelete={handleDelete}/>
               <TableContainer>
                 <Table
-                  sx={{ minWidth: 750 }}
+                  sx={{ minWidth: 750, 
+                    backgroundColor: dark ? theme.palette.background.default : 'white'
+                  }}
                   aria-labelledby="tableTitle"
                   size={dense ? 'small' : 'medium'}
                 >
@@ -1092,8 +1090,6 @@ export default function Home() {
         </Box>
       </Box>
     </ThemeProvider>
-
-      
   )
 }
 

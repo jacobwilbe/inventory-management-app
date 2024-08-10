@@ -589,6 +589,7 @@ export default function Home() {
 
   const [streamResources, setStreamResources] = useState(null);
   const [streamError, setStreamError] = useState(null);
+  const [classif, setClass] = useState('');
 
   const startStreamAnalysis = async () => {
     if (streamResources) return; // Prevent multiple streams
@@ -610,7 +611,7 @@ export default function Home() {
           canvas.height = video.videoHeight;
           canvas.getContext('2d').drawImage(video, 0, 0);
           const imageData = canvas.toDataURL('image/jpeg');
-          setItemName(classifyImage(imageData));
+         classifyImage(imageData);
         }
       }, 5000);
 
@@ -655,7 +656,7 @@ export default function Home() {
   
       const classification = response.choices[0].message.content;
       console.log("Classification:", classification);
-      return classification
+      setClass(classification);
       // You might want to update state or perform some action with the classification
       // For example: addItem(classification, 1, today);
     } catch (error) {
@@ -969,9 +970,9 @@ export default function Home() {
                     <Button
                       variant="contained"
                       color="secondary"
-                      onClick={() => addItem(itemName, 1, today)}
+                      onClick={() => addItem(classif, 1, today)}
                     >
-                      Add {itemName}
+                      Add {classif}
                     </Button>
 
                   </Box>

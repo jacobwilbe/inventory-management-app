@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon, FormControl  } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
@@ -27,6 +27,7 @@ import { visuallyHidden } from '@mui/utils';
 import RemoveIcon from '@mui/icons-material/Remove';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
+import {Camera} from "react-camera-pro";
 
 
 
@@ -376,6 +377,8 @@ export default function Home() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [dark, setDark] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
+  const [image, setImage] = useState(null);
+  const camera = useRef(null);
 
 //table functions
   const handleTimeExpire = (date) => {
@@ -584,6 +587,8 @@ export default function Home() {
       <Analytics/>
 
       <CssBaseline />
+
+      <Camera ref={camera} />
 
       <Box sx={{ flexDirection: 'column' , minHeight: '100vh', display: 'flex',
         justifyContent: 'center',
@@ -842,7 +847,7 @@ export default function Home() {
             >
               <Box sx={{height:'100%', marginRight: '2px'}}>
                 <Tooltip title="Add with AI!"sx={{height:'100%'}}>
-                  <Button variant="contained" color='secondary' startIcon={<AddAPhotoIcon />}/>
+                  <Button variant="contained" color='secondary' onClick={() => setImage(camera.current.takePhoto())} startIcon={<AddAPhotoIcon />}/>
                 </Tooltip>
               </Box>
               <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />}>

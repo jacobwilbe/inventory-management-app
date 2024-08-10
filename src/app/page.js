@@ -47,7 +47,7 @@ const style = {
   transform: 'translate(-50%, -50%)',
   width: 400,
   color: 'black',
-  backgroundColor: 'DimGray',
+  backgroundColor: 'white',
   border: '2px solid #000',
   borderColor: 'white',
   boxShadow: 24,
@@ -167,7 +167,7 @@ const headCells = [
     id: 'expiration',
     numeric: true,
     disablePadding: false,
-    label: 'Expires (Days)',
+    label: 'Expires In',
   },
   {
     id: 'actions',
@@ -469,7 +469,7 @@ export default function Home() {
         main: 'rgb(0,0,0)',
       },
       secondary: {
-        main: 'rgb(56,12,229)',
+        main: '#6600ff',
       },
     },
   };
@@ -587,7 +587,7 @@ export default function Home() {
       <Box sx={{ flexDirection: 'column' , minHeight: '100vh', display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: dark ? theme.palette.background.default : 'whitesmoke',
+        backgroundColor: dark ? theme.palette.background.default : '#f7f2ff',
         color: theme.palette.text.primary,
         transition: 'background-color 0.2s ease-out',
         minWidth: '65%',
@@ -603,7 +603,7 @@ export default function Home() {
               />
             </FormGroup>
             <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
-              Pantry <span style={{ color: theme.palette.secondary.main }}>AI</span>
+              Inventory <span style={{ color: '#6600ff' }}>AI</span>
             </Typography>
             <IconButton
               size = "large"
@@ -630,6 +630,28 @@ export default function Home() {
                 fullWidth
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'transparent', // Outline color
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgb(56,12,229)', // Outline color on hover
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'white', // Outline color when focused
+                    },
+                    backgroundColor: 'rgb(56,56,56)', // Background color
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white', // Text color
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'transparent', // Label color when focused
+                  },
+                  minWidth: '85%',
+                  zIndex: 10
+                }}
               />
               <TextField
                 label="Quantity"
@@ -637,6 +659,28 @@ export default function Home() {
                 fullWidth
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'transparent', // Outline color
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgb(56,12,229)', // Outline color on hover
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'transparent', // Outline color when focused
+                    },
+                    backgroundColor: 'rgb(56,56,56)', // Background color
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white', // Text color
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'transparent', // Label color when focused
+                  },
+                  minWidth: '85%',
+                  zIndex: 10
+                }}
               />
               <TextField
                 label="Expiration Date"
@@ -646,10 +690,32 @@ export default function Home() {
                 InputLabelProps={{ shrink: true }}
                 value={expirationDate}
                 onChange={(e) => setExpirationDate(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'transparent', // Outline color
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgb(56,12,229)', // Outline color on hover
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'transparent', // Outline color when focused
+                    },
+                    backgroundColor: 'rgb(56,56,56)', // Background color
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white', // Text color
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'transparent', // Label color when focused
+                  },
+                  minWidth: '85%',
+                  zIndex: 10
+                }}
               />
               <Button
                 variant="outlined"
-                sx = {{color: theme.palette.secondary.main, borderColor: theme.palette.secondary.main}}
+                sx = {{color: theme.palette.secondary.main, borderColor: theme.palette.secondary.main, backgroundColor: 'rgb(56,56,56)'}}
                 onClick={() => {
                   addItem(itemName, quantity, expirationDate);
                   setQuantity(1);
@@ -678,6 +744,28 @@ export default function Home() {
                 fullWidth
                 value={quantity}
                 onChange={(e) => setQuantity(Number(e.target.value))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'transparent', // Outline color
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgb(56,12,229)', // Outline color on hover
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'transparent', // Outline color when focused
+                    },
+                    backgroundColor: 'rgb(56,56,56)', // Background color
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white', // Text color
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'transparent', // Label color when focused
+                  },
+                  minWidth: '85%',
+                  zIndex: 10
+                }}
               />
               <TextField
                 label="Expiration Date"
@@ -687,20 +775,33 @@ export default function Home() {
                 InputLabelProps={{ shrink: true }}
                 value={expirationDate}
                 onChange={(e) => setExpirationDate(e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: 'transparent', // Outline color
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgb(56,12,229)', // Outline color on hover
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'transparent', // Outline color when focused
+                    },
+                    backgroundColor: 'rgb(56,56,56)', // Background color
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white', // Text color
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'transparent', // Label color when focused
+                  },
+                  minWidth: '85%',
+                  zIndex: 10
+                }}
+
               />
               <Button
                 variant="outlined"
-                sx={{ color: 'red', borderColor: 'red' }}
-                onClick={() => {
-                  handleDelete(itemName);
-                  setEditOpen(false);
-                }}
-              >
-                Delete
-              </Button>
-              <Button
-                variant="outlined"
-                sx={{ borderColor: theme.palette.secondary.main, color: theme.palette.secondary.main }}
+                sx={{ borderColor: theme.palette.secondary.main, color: theme.palette.secondary.main, backgroundColor: 'rgb(56,56,56)'}}
                 onClick={() => {
                   addItem(itemName, quantity, expirationDate);
                   setQuantity(1);
@@ -794,7 +895,7 @@ export default function Home() {
                             {row.name}
                           </TableCell>
                           <TableCell align="right">{row.quantity}</TableCell>
-                          <TableCell align="right">{handleTimeExpire(row.expirationDate)}</TableCell>
+                          <TableCell align="right">{handleTimeExpire(row.expirationDate)} Days</TableCell>
                           <TableCell align="right">
                             <IconButton
                               size = "small"

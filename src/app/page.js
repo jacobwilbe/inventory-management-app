@@ -1,30 +1,34 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, IconButton, TextField, Card, CardContent, CssBaseline , AppBar, Toolbar  } from '@mui/material'
-import CardHeader from '@mui/material/CardHeader';
-import CardMedia from '@mui/material/CardMedia';
+import { useState, useEffect, useMemo } from 'react'
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon  } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
 import Autocomplete from '@mui/material/Autocomplete';
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import CardActions from '@mui/material/CardActions';
-import {createTheme, ThemeProvider} from '@mui/material/styles';
+import {createTheme, ThemeProvider, styled} from '@mui/material/styles';
 import AccountCircle from '@mui/icons-material/AccountCircle';
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TablePagination from '@mui/material/TablePagination';
+import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
+import Checkbox from '@mui/material/Checkbox';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import Tooltip from '@mui/material/Tooltip';
+import PropTypes from 'prop-types';
+import { alpha } from '@mui/material/styles';
+import { visuallyHidden } from '@mui/utils';
+import RemoveIcon from '@mui/icons-material/Remove';
 
-export const themeOptions = {
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#5fc5a4',
-    },
-    secondary: {
-      main: '#00f5d1',
-    },
-  },
-};
 
-const theme = createTheme(themeOptions);
+
 
 import {
   collection,
@@ -44,6 +48,7 @@ const style = {
   width: 400,
   backgroundColor: 'black',
   border: '2px solid #000',
+  borderColor: 'white',
   boxShadow: 24,
   p: 4,
   display: 'flex',
@@ -51,8 +56,237 @@ const style = {
   gap: 3,
 }
 
+const MaterialUISwitch = styled(Switch)(({ theme }) => ({
+  width: 62,
+  height: 34,
+  padding: 7,
+  '& .MuiSwitch-switchBase': {
+    margin: 1,
+    padding: 0,
+    transform: 'translateX(6px)',
+    '&.Mui-checked': {
+      color: '#fff',
+      transform: 'translateX(22px)',
+      '& .MuiSwitch-thumb:before': {
+        backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+          '#fff',
+        )}" d="M9.305 1.667V3.75h1.389V1.667h-1.39zm-4.707 1.95l-.982.982L5.09 6.072l.982-.982-1.473-1.473zm10.802 0L13.927 5.09l.982.982 1.473-1.473-.982-.982zM10 5.139a4.872 4.872 0 00-4.862 4.86A4.872 4.872 0 0010 14.862 4.872 4.872 0 0014.86 10 4.872 4.872 0 0010 5.139zm0 1.389A3.462 3.462 0 0113.471 10a3.462 3.462 0 01-3.473 3.472A3.462 3.462 0 016.527 10 3.462 3.462 0 0110 6.528zM1.665 9.305v1.39h2.083v-1.39H1.666zm14.583 0v1.39h2.084v-1.39h-2.084zM5.09 13.928L3.616 15.4l.982.982 1.473-1.473-.982-.982zm9.82 0l-.982.982 1.473 1.473.982-.982-1.473-1.473zM9.305 16.25v2.083h1.389V16.25h-1.39z"/></svg>')`,
+      },
+      '& + .MuiSwitch-track': {
+        opacity: 1,
+        backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+      },
+    },
+  },
+  '& .MuiSwitch-thumb': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#003892' : '#001e3c',
+    width: 32,
+    height: 32,
+    '&::before': {
+      content: "''",
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      left: 0,
+      top: 0,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="20" width="20" viewBox="0 0 20 20"><path fill="${encodeURIComponent(
+        '#fff',
+      )}" d="M4.2 2.5l-.7 1.8-1.8.7 1.8.7.7 1.8.6-1.8L6.7 5l-1.9-.7-.6-1.8zm15 8.3a6.7 6.7 0 11-6.6-6.6 5.8 5.8 0 006.6 6.6z"/></svg>')`,
+    },
+  },
+  '& .MuiSwitch-track': {
+    opacity: 1,
+    backgroundColor: theme.palette.mode === 'dark' ? '#8796A5' : '#aab4be',
+    borderRadius: 20 / 2,
+  },
+}));
+
 const today = new Date().toISOString().split('T')[0]
 
+
+
+
+
+
+function createData(id, name, quantity, expirationDate) {
+  return {
+    id,
+    name,
+    quantity,
+    expirationDate
+  };
+}
+
+function descendingComparator(a, b, orderBy) {
+  if (b[orderBy] < a[orderBy]) {
+    return -1;
+  }
+  if (b[orderBy] > a[orderBy]) {
+    return 1;
+  }
+  return 0;
+}
+
+function getComparator(order, orderBy) {
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy);
+}
+
+
+function stableSort(array, comparator) {
+  const stabilizedThis = array.map((el, index) => [el, index]);
+  stabilizedThis.sort((a, b) => {
+    const order = comparator(a[0], b[0]);
+    if (order !== 0) {
+      return order;
+    }
+    return a[1] - b[1];
+  });
+  return stabilizedThis.map((el) => el[0]);
+}
+
+
+const headCells = [
+  {
+    id: 'name',
+    numeric: false,
+    disablePadding: true,
+    label: 'Item Name',
+  },
+  {
+    id: 'quantity',
+    numeric: true,
+    disablePadding: false,
+    label: 'Quantity',
+  },
+  {
+    id: 'expiration',
+    numeric: true,
+    disablePadding: false,
+    label: 'Expires (Days)',
+  },
+  {
+    id: 'actions',
+    numeric: true,
+    disablePadding: false,
+    label: 'Actions',
+  }
+];
+
+
+function EnhancedTableHead(props) {
+  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
+    props;
+  const createSortHandler = (property) => (event) => {
+    onRequestSort(event, property);
+  };
+
+  return (
+    <TableHead>
+      <TableRow>
+        <TableCell padding="checkbox">
+          <Checkbox
+            color="secondary"
+            indeterminate={numSelected > 0 && numSelected < rowCount}
+            checked={rowCount > 0 && numSelected === rowCount}
+            onChange={onSelectAllClick}
+            inputProps={{
+              'aria-label': 'select all items',
+            }}
+          />
+        </TableCell>
+        {headCells.map((headCell) => (
+          <TableCell
+            key={headCell.id}
+            align={headCell.numeric ? 'right' : 'left'}
+            padding={headCell.disablePadding ? 'none' : 'normal'}
+            sortDirection={orderBy === headCell.id ? order : false}
+          >
+            <TableSortLabel
+              active={orderBy === headCell.id}
+              direction={orderBy === headCell.id ? order : 'asc'}
+              onClick={createSortHandler(headCell.id)}
+            >
+              {headCell.label}
+              {orderBy === headCell.id ? (
+                <Box component="span" sx={visuallyHidden}>
+                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                </Box>
+              ) : null}
+            </TableSortLabel>
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
+  );
+}
+
+EnhancedTableHead.propTypes = {
+  numSelected: PropTypes.number.isRequired,
+  onRequestSort: PropTypes.func.isRequired,
+  onSelectAllClick: PropTypes.func.isRequired,
+  order: PropTypes.oneOf(['asc', 'desc']).isRequired,
+  orderBy: PropTypes.string.isRequired,
+  rowCount: PropTypes.number.isRequired,
+};
+
+function EnhancedTableToolbar(props) {
+  const { numSelected } = props;
+
+  return (
+    <Toolbar
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 },
+        ...(numSelected > 0 && {
+          bgcolor: (theme) =>
+            alpha(theme.palette.primary.main, theme.palette.action.activatedOpacity),
+        }),
+      }}
+    >
+      {numSelected > 0 ? (
+        <Typography
+          sx={{ flex: '1 1 100%' }}
+          color="inherit"
+          variant="subtitle1"
+          component="div"
+        >
+          {numSelected} selected
+        </Typography>
+      ) : (
+        <Typography
+          sx={{ flex: '1 1 100%' }}
+          variant="h6"
+          id="tableTitle"
+          component="div"
+        >
+          Inventory
+        </Typography>
+      )}
+
+      {numSelected > 0 ? (
+        <Tooltip title="Delete">
+          <IconButton>
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      ) : (
+        <Tooltip title="Filter list">
+          <IconButton>
+            <FilterListIcon />
+          </IconButton>
+        </Tooltip>
+      )}
+    </Toolbar>
+  );
+}
+
+EnhancedTableToolbar.propTypes = {
+  numSelected: PropTypes.number.isRequired,
+};
 
 
 export default function Home() {
@@ -65,8 +299,119 @@ export default function Home() {
   const [quantity, setQuantity] = useState(1);
   const [editOpen, setEditOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  //for authentication
   const [anchorEl, setAnchorEl] = useState(null);
+  const [color, setColor] = useState('dark')
+  const [currClick, setCurrClick] = useState(null)
 
+//table functions
+  const handleTimeExpire = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expire = new Date(date);
+    expire.setHours(0, 0, 0, 0);
+    const diff = expire - today;
+    return Number(Math.floor(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  
+  const rows = inventory.map((item, index) => createData(index+1, item.name, item.quantity, item.expirationDate));
+ 
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('quantity');
+  const [selected, setSelected] = useState([]);
+  const [page, setPage] = useState(0);
+  const [dense, setDense] = useState(false);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const handleRequestSort = (_, property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const newSelected = rows.map((n) => n.id);
+      setSelected(newSelected);
+      return;
+    }
+    setSelected([]);
+  };
+
+  const handleClick = (event, id) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected = [];
+
+    if (selectedIndex === -1) {
+      newSelected = newSelected.concat(selected, id);
+    } else if (selectedIndex === 0) {
+      newSelected = newSelected.concat(selected.slice(1));
+    } else if (selectedIndex === selected.length - 1) {
+      newSelected = newSelected.concat(selected.slice(0, -1));
+    } else if (selectedIndex > 0) {
+      newSelected = newSelected.concat(
+        selected.slice(0, selectedIndex),
+        selected.slice(selectedIndex + 1),
+      );
+    }
+    setSelected(newSelected);
+  };
+
+  const handleChangePage = (_, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleChangeDense = (event) => {
+    setDense(event.target.checked);
+  };
+
+  const isSelected = (id) => selected.indexOf(id) !== -1;
+
+  // Avoid a layout jump when reaching the last page with empty rows.
+  const emptyRows =
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+
+  const visibleRows = useMemo(
+    () =>
+      stableSort(rows, getComparator(order, orderBy)).slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage,
+      ),
+    [order, orderBy, page, rows, rowsPerPage],
+  );
+  
+//table functions end
+
+//theme declaration
+  const themeOptions = {
+    palette: {
+      mode: `${color}`,
+      primary: {
+        main: 'rgb(0,0,0)',
+      },
+      secondary: {
+        main: 'rgb(56,12,229)',
+      },
+    },
+  };
+  const changeColor = () => {
+    if (color === 'light') {
+      setColor('dark')
+    } else {
+      setColor('light')
+    }
+
+  }
+  const theme = createTheme(themeOptions);
+  //Theme end
+
+  //search function
   const handleSearch = async () => {
     setItemName(searchQuery)
     setSearchQuery('')
@@ -75,12 +420,16 @@ export default function Home() {
     setEditOpen(true)
     
   }
-
+  const handleSearchClose = () => setSearchOpen(false)
+  const handleSearchOpen = () => setSearchOpen(true)
+  //search functions end
 
   //handle drop doown menu
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
+
+  //authentication dropdown
   const handleElClose = () => {
     setAnchorEl(null);
   };
@@ -101,17 +450,27 @@ export default function Home() {
   }, []);
 
   //add item to inventory
+
   const addItem = async (item, quantity, expirationDate) => {
-    const docRef = doc(collection(firestore, 'inventory'), item)
-    const docSnap = await getDoc(docRef)
-    if (docSnap.exists() && editOpen === false) {
-      const data  = docSnap.data()
-      await setDoc(docRef, {quantity: quantity + Number(data.quantity), expirationDate: expirationDate})
-    } else {
-      await setDoc(docRef,{quantity: Number(quantity), expirationDate: expirationDate})
-    }
-    await updateInventory()
-  }
+  
+      const docRef = doc(collection(firestore, 'inventory'), item);
+      const docSnap = await getDoc(docRef);
+  
+      if (docSnap.exists() && editOpen === false) {
+        const data = docSnap.data();
+        await setDoc(docRef, {
+          quantity: quantity + Number(data.quantity),
+          expirationDate: expirationDate
+        });
+      } else {
+        await setDoc(docRef, {
+          quantity: Number(quantity),
+          expirationDate: expirationDate
+        });
+      }
+  
+      await updateInventory();
+  };
 
 
   //remove item from inventory
@@ -131,8 +490,6 @@ export default function Home() {
   //manage the modal state
   const handleOpenAdd = () => setAddOpen(true)
   const handleClose = () => setAddOpen(false)
-  const handleSearchClose = () => setSearchOpen(false)
-  const handleSearchOpen = () => setSearchOpen(true)
 
   const handleOpenEdit = (name, quantity, expirationDate) => () => {
     setItemName(name)
@@ -159,6 +516,7 @@ export default function Home() {
 
   return (
     <ThemeProvider theme={theme}>
+      <Analytics/>
 
       <CssBaseline />
 
@@ -167,15 +525,23 @@ export default function Home() {
         alignItems: 'center',
         backgroundColor: theme.palette.background.default,
         color: theme.palette.text.primary,
-        transition: 'background-color 0.2s ease-out'
+        transition: 'background-color 0.2s ease-out',
+        minWidth: '65%',
+        maxWidth: '65%'
       }}>
-        <AppBar position="fixed" color="primary">
+        <AppBar position="fixed" color='primary' >
           <Toolbar align="center">
-            <Button variant="contained" color="primary" onClick={handleSearchOpen} startIcon={<SearchIcon />} > Search </Button>
+            <FormGroup>
+              <FormControlLabel
+                control={<MaterialUISwitch sx={{ m: 1 }} />}
+                onChange={changeColor}
+              />
+            </FormGroup>
+            <Button variant="contained" color="secondary" onClick={handleSearchOpen} startIcon={<SearchIcon />} > Search </Button>
             <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
               Pantry <span style={{ color: theme.palette.secondary.main }}>AI</span>
             </Typography>
-            <Button variant="contained" color="primary" onClick={handleOpenAdd} startIcon={<AddIcon />} >
+            <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />} >
               Add Item
             </Button>
             <IconButton
@@ -191,7 +557,6 @@ export default function Home() {
           </Toolbar>
         </AppBar>
 
-        <Analytics mode={'production'} />
         <Modal open={open} onClose={handleClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
@@ -223,6 +588,7 @@ export default function Home() {
               />
               <Button
                 variant="outlined"
+                sx = {{color: theme.palette.secondary.main, borderColor: theme.palette.secondary.main}}
                 onClick={() => {
                   addItem(itemName, quantity, expirationDate);
                   setQuantity(1);
@@ -261,6 +627,7 @@ export default function Home() {
                 }}
               />
               <Button
+                sx ={{color: theme.palette.secondary.main, borderColor: theme.palette.secondary.main}}
                 variant="outlined"
                 onClick={() => {
                     handleSearch()
@@ -273,7 +640,7 @@ export default function Home() {
           </Box>
         </Modal>
 
-        <Modal open={editOpen} onClose={handleEditClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
+        <Modal open={editOpen} onClose={handleEditClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description" >
           <Box sx={style}>
             <Typography id="modal-modal-title" variant="h6" component="h2">
               Edit {itemName}
@@ -307,6 +674,7 @@ export default function Home() {
               </Button>
               <Button
                 variant="outlined"
+                sx={{ borderColor: theme.palette.secondary.main, color: theme.palette.secondary.main }}
                 onClick={() => {
                   addItem(itemName, quantity, expirationDate);
                   setQuantity(1);
@@ -323,39 +691,112 @@ export default function Home() {
 
         <Box
           sx={{
-            flexGrow: 1,
             display: 'flex',
             flexDirection: 'row',
             flexWrap: 'wrap',
             justifyContent: 'center',
             gap: 3,
-            marginTop: 50
+            marginTop: '10%',
+            marginBottom: '10%'
           }}
         >
-          {inventory.map(({ name, quantity, expirationDate }) => (
-            <Box key={name}>
-              <Card sx = {{width: '275px'}}>
-                <CardHeader title={name} />
-                <CardMedia alt={name} component="img" height="194" />
-                <CardContent>
-                  <Typography variant="body2">
-                    <strong>Expiration Date:</strong> <br /> {expirationDate}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Quantity:</strong> {quantity}
-                  </Typography>
-                </CardContent>
-                <CardActions disableSpacing>
-                  <IconButton onClick={handleOpenEdit(name, quantity, expirationDate)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => removeItem(name, quantity, expirationDate)}>
-                    <DeleteIcon />
-                  </IconButton>
-                </CardActions>
-              </Card>
-            </Box>
-          ))}
+          <Box sx={{ width: '100%', flexGrow: 1}}>
+            <Paper sx={{ width: '100%', mb: 2, elevation :6}}>
+              <EnhancedTableToolbar numSelected={selected.length} />
+              <TableContainer>
+                <Table
+                  sx={{ minWidth: 750 }}
+                  aria-labelledby="tableTitle"
+                  size={dense ? 'small' : 'medium'}
+                >
+                  <EnhancedTableHead
+                    numSelected={selected.length}
+                    order={order}
+                    orderBy={orderBy}
+                    onSelectAllClick={handleSelectAllClick}
+                    onRequestSort={handleRequestSort}
+                    rowCount={rows.length}
+                  />
+                  <TableBody>
+                    {visibleRows.map((row, index) => {
+                      const isItemSelected = isSelected(row.id);
+                      const labelId = `enhanced-table-checkbox-${index}`;
+
+                      return (
+                        <TableRow
+                          hover
+                          onClick={(event) => handleClick(event, row.id)}
+                          role="checkbox"
+                          aria-checked={isItemSelected}
+                          tabIndex={-1}
+                          key={row.id}
+                          selected={isItemSelected}
+                          sx={{ cursor: 'pointer' }}
+                        >
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              color="secondary"
+                              checked={isItemSelected}
+                              inputProps={{
+                                'aria-labelledby': labelId,
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell
+                            component="th"
+                            id={labelId}
+                            scope="row"
+                            padding="none"
+                          >
+                            {row.name}
+                          </TableCell>
+                          <TableCell align="right">{row.quantity}</TableCell>
+                          <TableCell align="right">{handleTimeExpire(row.expirationDate)}</TableCell>
+                          <TableCell align="right">
+                            <IconButton
+                              size = "small"
+                              onClick={() => {handleOpenEdit(row.name, row.quantity, row.expirationDate)}
+                              }
+                            >
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton
+                              size = "small"
+                              onClick={() => {removeItem(row.name, row.quantity, row.expirationDate)}}
+                            >
+                              <RemoveIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {emptyRows > 0 && (
+                      <TableRow
+                        style={{
+                          height: (dense ? 33 : 53) * emptyRows,
+                        }}
+                      >
+                        <TableCell colSpan={6} />
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={rows.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
+            </Paper>
+            <FormControlLabel
+              control={<Switch checked={dense} onChange={handleChangeDense} />}
+              label="Collapse"
+            />
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>

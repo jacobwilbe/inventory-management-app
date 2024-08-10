@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon, FormControl  } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
-import Autocomplete from '@mui/material/Autocomplete';
 import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import {createTheme, ThemeProvider, styled} from '@mui/material/styles';
 import AccountCircle from '@mui/icons-material/AccountCircle';
@@ -27,9 +26,10 @@ import { visuallyHidden } from '@mui/utils';
 import RemoveIcon from '@mui/icons-material/Remove';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
-import {Camera} from "react-camera-pro";
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';  
+import StopIcon from '@mui/icons-material/Stop';
 
-
+const {OpenAI} = require('openai');
 
 
 import {
@@ -364,6 +364,13 @@ EnhancedTableToolbar.propTypes = {
   numSelected: PropTypes.number.isRequired,
 };
 
+require('dotenv').config();
+
+const openai = new OpenAI({
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true
+})
+
 
 export default function Home() {
   // We'll add our component logic here
@@ -377,8 +384,7 @@ export default function Home() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [dark, setDark] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [image, setImage] = useState(null);
-  const camera = useRef(null);
+  const videoRef = useRef(null);
 
 //table functions
   const handleTimeExpire = (date) => {
@@ -575,20 +581,93 @@ export default function Home() {
     await deleteDoc(docRef)
     await updateInventory()
   }
-
   
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const handleCameraOpen = () => setCameraOpen(true);
+  const handleCameraClose = () => setCameraOpen(false);
 
 
+  const [streamResources, setStreamResources] = useState(null);
+  const [streamError, setStreamError] = useState(null);
+
+  const startStreamAnalysis = async () => {
+    if (streamResources) return; // Prevent multiple streams
+
+    try {
+      setStreamError(null);
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        await video.play(); // Wait for video to start playing
+      }
+
+      const intervalId = setInterval(() => {
+        if (video) {
+          const canvas = document.createElement('canvas');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          canvas.getContext('2d').drawImage(video, 0, 0);
+          const imageData = canvas.toDataURL('image/jpeg');
+          setItemName(classifyImage(imageData));
+        }
+      }, 5000);
+
+      setStreamResources({ stream, intervalId });
+      setCameraOpen(true);
+    } catch (error) {
+      console.error("Error starting stream:", error);
+      setStreamError("Failed to start video stream. Please check your camera permissions.");
+    }
+  };
+
+  const endStreamAnalysis = () => {
+    if (streamResources) {
+      const { stream, intervalId } = streamResources;
+      stream.getTracks().forEach(track => track.stop());
+      clearInterval(intervalId);
+      setStreamResources(null);
+      setCameraOpen(false);
+    }
+  };
   
-
+  async function classifyImage(imageData) {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {type: "text", text: 'Classify the item in the image in 1-2 words'},
+              {
+                type: 'image_url', 
+                image_url: {
+                  url: imageData
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 300,
+      });
+  
+      const classification = response.choices[0].message.content;
+      console.log("Classification:", classification);
+      return classification
+      // You might want to update state or perform some action with the classification
+      // For example: addItem(classification, 1, today);
+    } catch (error) {
+      console.error("Error classifying image:", error);
+    }
+  }
 
   return (
     <ThemeProvider theme={theme}>
       <Analytics/>
 
       <CssBaseline />
-
-      <Camera ref={camera} />
 
       <Box sx={{ flexDirection: 'column' , minHeight: '100vh', display: 'flex',
         justifyContent: 'center',
@@ -847,8 +926,56 @@ export default function Home() {
             >
               <Box sx={{height:'100%', marginRight: '2px'}}>
                 <Tooltip title="Add with AI!"sx={{height:'100%'}}>
-                  <Button variant="contained" color='secondary' onClick={() => setImage(camera.current.takePhoto())} startIcon={<AddAPhotoIcon />}/>
+                  <Button variant="contained" color='secondary' onClick={() => handleCameraOpen()} startIcon={<AddAPhotoIcon />}/>
                 </Tooltip>
+                <Modal
+                  open={cameraOpen}
+                  onClose={endStreamAnalysis}
+                  aria-labelledby="camera-modal-title"
+                  aria-describedby="camera-modal-description"
+                >
+                  <Box sx={style}>
+                    <Typography id="camera-modal-title" variant="h6" component="h2">
+                      Video Stream
+                    </Typography>
+                    {streamError && (
+                      <Typography color="error">{streamError}</Typography>
+                    )}
+                    <video
+                      ref={videoRef}
+                      style={{ width: '100%', height: 'auto', maxHeight: '300px', backgroundColor: 'black' }}
+                      autoPlay
+                      playsInline
+                    />
+                    {!streamResources ? (
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={startStreamAnalysis}
+                        startIcon={<PlayArrowIcon />}
+                      >
+                        Start Stream Analysis
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={endStreamAnalysis}
+                        startIcon={<StopIcon />}
+                      >
+                        Stop Stream Analysis
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => addItem(itemName, 1, today)}
+                    >
+                      Add {itemName}
+                    </Button>
+
+                  </Box>
+                </Modal>
               </Box>
               <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />}>
                 Add Item

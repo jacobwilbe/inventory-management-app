@@ -26,6 +26,7 @@ import { alpha } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
 import RemoveIcon from '@mui/icons-material/Remove';
 import LunchDiningIcon from '@mui/icons-material/LunchDining';
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 
 
 
@@ -839,6 +840,11 @@ export default function Home() {
                 width: '100%'
               }} 
             >
+              <Box sx={{height:'100%', marginRight: '2px'}}>
+                <Tooltip title="Add with AI!"sx={{height:'100%'}}>
+                  <Button variant="contained" color='secondary' startIcon={<AddAPhotoIcon />}/>
+                </Tooltip>
+              </Box>
               <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />}>
                 Add Item
               </Button>
@@ -862,7 +868,11 @@ export default function Home() {
                     rowCount={rows.length}
                   />
                   <TableBody>
-                    {visibleRows.map((row, index) => {
+                    {(
+                      searchQuery === '' 
+                        ? visibleRows 
+                        : visibleRows.filter((row) => row.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    ).map((row, index) => {
                       const isItemSelected = isSelected(row.name);
                       const labelId = `enhanced-table-checkbox-${index}`;
 
@@ -898,15 +908,14 @@ export default function Home() {
                           <TableCell align="right">{handleTimeExpire(row.expirationDate)} Days</TableCell>
                           <TableCell align="right">
                             <IconButton
-                              size = "small"
-                              onClick={handleOpenEdit(row.name, row.quantity, row.expirationDate)}
-                              
+                              size="small"
+                              onClick={() => handleOpenEdit(row.name, row.quantity, row.expirationDate)}
                             >
                               <EditIcon />
                             </IconButton>
                             <IconButton
-                              size = "small"
-                              onClick={() => {removeItem(row.name, row.quantity, row.expirationDate)}}
+                              size="small"
+                              onClick={() => removeItem(row.name, row.quantity, row.expirationDate)}
                             >
                               <RemoveIcon />
                             </IconButton>

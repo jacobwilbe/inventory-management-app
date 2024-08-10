@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon  } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon, FormControl  } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
 import Autocomplete from '@mui/material/Autocomplete';
@@ -20,12 +20,12 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import Checkbox from '@mui/material/Checkbox';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import Tooltip from '@mui/material/Tooltip';
 import PropTypes from 'prop-types';
 import { alpha } from '@mui/material/styles';
 import { visuallyHidden } from '@mui/utils';
 import RemoveIcon from '@mui/icons-material/Remove';
+import LunchDiningIcon from '@mui/icons-material/LunchDining';
 
 
 
@@ -46,7 +46,8 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: 400,
-  backgroundColor: 'black',
+  color: 'black',
+  backgroundColor: 'DimGray',
   border: '2px solid #000',
   borderColor: 'white',
   boxShadow: 24,
@@ -226,15 +227,82 @@ function EnhancedTableHead(props) {
 
 EnhancedTableHead.propTypes = {
   numSelected: PropTypes.number.isRequired,
+  removals: PropTypes.array.isRequired,
+  handleDelete: PropTypes.func.isRequired,
   onRequestSort: PropTypes.func.isRequired,
   onSelectAllClick: PropTypes.func.isRequired,
   order: PropTypes.oneOf(['asc', 'desc']).isRequired,
   orderBy: PropTypes.string.isRequired,
   rowCount: PropTypes.number.isRequired,
+
 };
 
+function SearchBar(props) {
+  const { searchQuery, setSearchQuery, handleOpenAdd } = props
+  return (
+    <Box sx = {{width: '100%', justifyContent: 'flex-start', position: 'relative', flexDirection: 'row'}}>
+      <FormControl>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%'}}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid white', // Border color
+              height: '56px', // Same height as the TextField
+              minWidth: '56px',
+              backgroundColor: 'rgba(56,56,56)',
+              zIndex: 10
+            }}
+          >
+            <IconButton type="submit" aria-label="search">
+              <SearchIcon style={{ fill: "white" }} />
+            </IconButton>
+          </Box>
+          <TextField
+            id="search-bar"
+            className="text"
+            value={searchQuery}
+            onInput={(e) => setSearchQuery(e.target.value)}
+            label="Search Item"
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  borderColor: 'white', // Outline color
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgb(56,12,229)', // Outline color on hover
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: 'white', // Outline color when focused
+                },
+                backgroundColor: 'rgb(56,56,56)', // Background color
+              },
+              '& .MuiInputBase-input': {
+                color: 'white', // Text color
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: 'white', // Label color when focused
+              },
+              minWidth: '85%',
+              zIndex: 10
+            }}
+          />
+        </Box>
+      </FormControl>
+    </Box>
+      
+  )
+}
+SearchBar.propTypes = {
+  setSearchQuery: PropTypes.func.isRequired,
+  searchQuery: PropTypes.string.isRequired,
+  handleOpenAdd: PropTypes.func.isRequired
+}
+
 function EnhancedTableToolbar(props) {
-  const { numSelected } = props;
+  const { numSelected, removals, handleDelete} = props;
 
   return (
     <Toolbar
@@ -269,14 +337,20 @@ function EnhancedTableToolbar(props) {
 
       {numSelected > 0 ? (
         <Tooltip title="Delete">
-          <IconButton>
+          <IconButton
+            onClick={() => {
+              removals.forEach((item) => {
+                handleDelete(item);
+              });
+            }}
+          >
             <DeleteIcon />
           </IconButton>
         </Tooltip>
       ) : (
-        <Tooltip title="Filter list">
+        <Tooltip title="Burger">
           <IconButton>
-            <FilterListIcon />
+            <LunchDiningIcon />
           </IconButton>
         </Tooltip>
       )}
@@ -294,15 +368,13 @@ export default function Home() {
   const [inventory, setInventory] = useState([])
   const [open, setAddOpen] = useState(false)
   const [itemName, setItemName] = useState('')
-  const [searchQuery, setSearchQuery] = useState('')
   const [expirationDate, setExpirationDate] = useState(today);
   const [quantity, setQuantity] = useState(1);
   const [editOpen, setEditOpen] = useState(false)
-  const [searchOpen, setSearchOpen] = useState(false)
   //for authentication
   const [anchorEl, setAnchorEl] = useState(null);
-  const [color, setColor] = useState('dark')
-  const [currClick, setCurrClick] = useState(null)
+  const [dark, setDark] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
 
 //table functions
   const handleTimeExpire = (date) => {
@@ -313,6 +385,7 @@ export default function Home() {
     const diff = expire - today;
     return Number(Math.floor(diff / (1000 * 60 * 60 * 24)));
   }
+
 
   
   const rows = inventory.map((item, index) => createData(index+1, item.name, item.quantity, item.expirationDate));
@@ -332,7 +405,7 @@ export default function Home() {
 
   const handleSelectAllClick = (event) => {
     if (event.target.checked) {
-      const newSelected = rows.map((n) => n.id);
+      const newSelected = rows.map((n) => n.name);
       setSelected(newSelected);
       return;
     }
@@ -391,7 +464,7 @@ export default function Home() {
 //theme declaration
   const themeOptions = {
     palette: {
-      mode: `${color}`,
+      mode: 'dark',
       primary: {
         main: 'rgb(0,0,0)',
       },
@@ -401,10 +474,10 @@ export default function Home() {
     },
   };
   const changeColor = () => {
-    if (color === 'light') {
-      setColor('dark')
+    if (dark) {
+      setDark(false)
     } else {
-      setColor('light')
+      setDark(true)
     }
 
   }
@@ -412,16 +485,7 @@ export default function Home() {
   //Theme end
 
   //search function
-  const handleSearch = async () => {
-    setItemName(searchQuery)
-    setSearchQuery('')
-    setQuantity(inventory.find(item => item.name === searchQuery).quantity)
-    setExpirationDate(inventory.find(item => item.name === searchQuery).expirationDate)
-    setEditOpen(true)
-    
-  }
-  const handleSearchClose = () => setSearchOpen(false)
-  const handleSearchOpen = () => setSearchOpen(true)
+  
   //search functions end
 
   //handle drop doown menu
@@ -523,27 +587,24 @@ export default function Home() {
       <Box sx={{ flexDirection: 'column' , minHeight: '100vh', display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: theme.palette.background.default,
+        backgroundColor: dark ? theme.palette.background.default : 'whitesmoke',
         color: theme.palette.text.primary,
         transition: 'background-color 0.2s ease-out',
         minWidth: '65%',
-        maxWidth: '65%'
+        maxWidth: '65%',
+        zIndex: 1
       }}>
         <AppBar position="fixed" color='primary' >
           <Toolbar align="center">
             <FormGroup>
               <FormControlLabel
                 control={<MaterialUISwitch sx={{ m: 1 }} />}
-                onChange={changeColor}
+                onChange={() => changeColor()} 
               />
             </FormGroup>
-            <Button variant="contained" color="secondary" onClick={handleSearchOpen} startIcon={<SearchIcon />} > Search </Button>
             <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
               Pantry <span style={{ color: theme.palette.secondary.main }}>AI</span>
             </Typography>
-            <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />} >
-              Add Item
-            </Button>
             <IconButton
               size = "large"
               aria-label="account of current user"
@@ -603,42 +664,7 @@ export default function Home() {
           </Box>
         </Modal>
 
-        <Modal open={searchOpen} onClose={handleSearchClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description">
-          <Box sx={style}>
-            <Typography id="modal-modal-title" variant="h6" component="h2">
-              Search Inventory
-            </Typography>
-            <Stack spacing={2} mt={2} direction={"row"}>
-              <Autocomplete
-                sx = {{width : "100%"}}
-                options={inventory.map(item => ({ label: item.name }))}
-                getOptionLabel={(option) => option.label}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Search"
-                    variant="outlined"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                )}
-                onChange={(_, newValue) => {
-                  setSearchQuery(newValue ? newValue.label : '');
-                }}
-              />
-              <Button
-                sx ={{color: theme.palette.secondary.main, borderColor: theme.palette.secondary.main}}
-                variant="outlined"
-                onClick={() => {
-                    handleSearch()
-                    setSearchOpen(false)
-                }}
-              >
-                Search
-              </Button>
-            </Stack>
-          </Box>
-        </Modal>
+        
 
         <Modal open={editOpen} onClose={handleEditClose} aria-labelledby="modal-modal-title" aria-describedby="modal-modal-description" >
           <Box sx={style}>
@@ -689,6 +715,7 @@ export default function Home() {
           </Box>
         </Modal>
 
+        
         <Box
           sx={{
             display: 'flex',
@@ -700,9 +727,25 @@ export default function Home() {
             marginBottom: '10%'
           }}
         >
+          <Box
+            sx ={{flexDirection: 'row', display: 'flex', width: '100%', justifyContent: 'space-between'}}
+          >
+            <SearchBar setSearchQuery={setSearchQuery} searchQuery={searchQuery} handleOpenAdd={handleOpenAdd} />
+            <Box
+              sx = {{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                width: '100%'
+              }} 
+            >
+              <Button variant="contained" color="secondary" onClick={handleOpenAdd} startIcon={<AddIcon />}>
+                Add Item
+              </Button>
+            </Box>
+          </Box>
           <Box sx={{ width: '100%', flexGrow: 1}}>
             <Paper sx={{ width: '100%', mb: 2, elevation :6}}>
-              <EnhancedTableToolbar numSelected={selected.length} />
+              <EnhancedTableToolbar numSelected={selected.length} removals={selected} handleDelete={handleDelete}/>
               <TableContainer>
                 <Table
                   sx={{ minWidth: 750 }}
@@ -719,13 +762,13 @@ export default function Home() {
                   />
                   <TableBody>
                     {visibleRows.map((row, index) => {
-                      const isItemSelected = isSelected(row.id);
+                      const isItemSelected = isSelected(row.name);
                       const labelId = `enhanced-table-checkbox-${index}`;
 
                       return (
                         <TableRow
                           hover
-                          onClick={(event) => handleClick(event, row.id)}
+                          onClick={(event) => handleClick(event, row.name)}
                           role="checkbox"
                           aria-checked={isItemSelected}
                           tabIndex={-1}
@@ -755,8 +798,8 @@ export default function Home() {
                           <TableCell align="right">
                             <IconButton
                               size = "small"
-                              onClick={() => {handleOpenEdit(row.name, row.quantity, row.expirationDate)}
-                              }
+                              onClick={handleOpenEdit(row.name, row.quantity, row.expirationDate)}
+                              
                             >
                               <EditIcon />
                             </IconButton>
@@ -794,7 +837,13 @@ export default function Home() {
             </Paper>
             <FormControlLabel
               control={<Switch checked={dense} onChange={handleChangeDense} />}
-              label="Collapse"
+              label={
+                dark ? (
+                  <span style={{ color: 'white' }}>Shrink</span>
+                ) : (
+                  <span style={{ color: 'black' }}>Shrink</span>
+                )
+              }
             />
           </Box>
         </Box>
@@ -804,3 +853,4 @@ export default function Home() {
       
   )
 }
+

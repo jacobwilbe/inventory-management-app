@@ -19,7 +19,7 @@ export async function POST(request) {
         {
           role: "user",
           content: [
-            { type: "text", text: 'Classify the item in the image in 1-2 words' },
+            { type: "text", text: 'Name the item, be specific, 1-2 words max' },
             {
               type: 'image_url',
               image_url: {

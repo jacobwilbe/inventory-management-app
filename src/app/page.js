@@ -28,8 +28,79 @@ import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';  
 import StopIcon from '@mui/icons-material/Stop';
+import { getAuth, signInWithPhoneNumber } from "firebase/auth";
 
-const {OpenAI} = require('openai');
+var firebase = require('firebase');
+var firebaseui = require('firebaseui');
+
+var ui = new firebaseui.auth.AuthUI(firebase.auth());
+
+var uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+      // User successfully signed in.
+      // Return type determines whether we continue the redirect automatically
+      // or whether we leave that to developer to handle.
+      return true;
+    },
+    uiShown: function() {
+      // The widget is rendered.
+      // Hide the loader.
+      document.getElementById('loader').style.display = 'none';
+    }
+  },
+  // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
+  signInFlow: 'popup',
+  signInSuccessUrl: '<url-to-redirect-to-on-success>',
+  signInOptions: [
+    // Leave the lines as is for the providers you want to offer your users.
+    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+    firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+    firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+    firebase.auth.GithubAuthProvider.PROVIDER_ID,
+    firebase.auth.EmailAuthProvider.PROVIDER_ID,
+    firebase.auth.PhoneAuthProvider.PROVIDER_ID
+  ],
+  // Terms of service url.
+  tosUrl: '<your-tos-url>',
+  // Privacy policy url.
+  privacyPolicyUrl: '<your-privacy-policy-url>'
+};
+
+// To apply the default browser preference instead of explicitly setting it.
+// auth.useDeviceLanguage();
+
+
+const phoneNumber = getPhoneNumberFromUserInput();
+const appVerifier = window.recaptchaVerifier;
+
+const auth = getAuth();
+signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+    .then((confirmationResult) => {
+      // SMS sent. Prompt user to type the code from the message, then sign the
+      // user in with confirmationResult.confirm(code).
+      window.confirmationResult = confirmationResult;
+      // ...
+    }).catch((error) => {
+      // Error; SMS not sent
+      // ...
+    });
+    grecaptcha.reset(window.recaptchaWidgetId);
+
+    // Or, if you haven't stored the widget ID:
+    window.recaptchaVerifier.render().then(function(widgetId) {
+      grecaptcha.reset(widgetId);
+    });
+    const code = getCodeFromUserInput();
+    confirmationResult.confirm(code).then((result) => {
+      // User signed in successfully.
+      const user = result.user;
+      // ...
+    }).catch((error) => {
+      // User couldn't sign in (bad verification code?)
+      // ...
+    });
+
 
 
 import {
@@ -375,6 +446,7 @@ export default function Home() {
   const [editOpen, setEditOpen] = useState(false)
   //for authentication
   const [anchorEl, setAnchorEl] = useState(null);
+  const [auth, setAuth] = useState(true);
   const [dark, setDark] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const videoRef = useRef(null);
@@ -604,8 +676,7 @@ export default function Home() {
           canvas.height = video.videoHeight;
           canvas.getContext('2d').drawImage(video, 0, 0);
           const imageData = canvas.toDataURL('image/jpeg');
-          testAPI();
-         classifyImage(imageData);
+          classifyImage(imageData);
         }
       }, 5000);
 
@@ -624,6 +695,7 @@ export default function Home() {
       clearInterval(intervalId);
       setStreamResources(null);
       setCameraOpen(false);
+      setClass('');
     }
   };
   async function testAPI() {
@@ -684,19 +756,27 @@ export default function Home() {
                 onChange={() => changeColor()} 
               />
             </FormGroup>
-            <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
-              Inventory <span style={{ color: '#6600ff' }}>AI</span>
-            </Typography>
-            <IconButton
-              size = "large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleMenu}
-              color="inherit" 
-            >
-              <AccountCircle />
-            </IconButton>
+            {auth ? (
+              <>
+                <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+                  Inventory <span style={{ color: '#6600ff' }}>AI</span>
+                </Typography>
+                <IconButton
+                  size="large"
+                  aria-label="account of current user"
+                  aria-controls="menu-appbar"
+                  aria-haspopup="true"
+                  onClick={handleMenu}
+                  color="inherit"
+                >
+                  <AccountCircle />
+                </IconButton>
+              </>
+            ) : (
+              <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+                Inventory <span style={{ color: '#6600ff' }}>AI</span>
+              </Typography>
+            )}
           </Toolbar>
         </AppBar>
 
@@ -933,7 +1013,7 @@ export default function Home() {
                 >
                   <Box sx={style}>
                     <Typography id="camera-modal-title" variant="h6" component="h2">
-                      Video Stream
+                      Item Classification
                     </Typography>
                     {streamError && (
                       <Typography color="error">{streamError}</Typography>
@@ -957,7 +1037,9 @@ export default function Home() {
                       <Button
                         variant="contained"
                         color="secondary"
-                        onClick={endStreamAnalysis}
+                        onClick={() => 
+                          endStreamAnalysis()
+                        }
                         startIcon={<StopIcon />}
                       >
                         Stop Stream Analysis
@@ -968,7 +1050,7 @@ export default function Home() {
                       color="secondary"
                       onClick={() => addItem(classif, 1, today)}
                     >
-                      Add {classif}
+                      Add: {classif}
                     </Button>
 
                   </Box>

@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, Icon, FormControl  } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, IconButton, TextField, CssBaseline , AppBar, Toolbar, Paper, FormControl  } from '@mui/material'
 import { firestore } from '@/firebase'
 import { Analytics } from "@vercel/analytics/react"
-import { Add as AddIcon, Search as SearchIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Search, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import {createTheme, ThemeProvider, styled} from '@mui/material/styles';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import FormGroup from '@mui/material/FormGroup';
@@ -28,78 +28,15 @@ import LunchDiningIcon from '@mui/icons-material/LunchDining';
 import AddAPhotoIcon from '@mui/icons-material/AddAPhoto';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';  
 import StopIcon from '@mui/icons-material/Stop';
-import { getAuth, signInWithPhoneNumber } from "firebase/auth";
+import { Menu, MenuItem } from '@mui/material';
+import {useRouter} from 'next/navigation';
 
-var firebase = require('firebase');
-var firebaseui = require('firebaseui');
 
-var ui = new firebaseui.auth.AuthUI(firebase.auth());
 
-var uiConfig = {
-  callbacks: {
-    signInSuccessWithAuthResult: function(authResult, redirectUrl) {
-      // User successfully signed in.
-      // Return type determines whether we continue the redirect automatically
-      // or whether we leave that to developer to handle.
-      return true;
-    },
-    uiShown: function() {
-      // The widget is rendered.
-      // Hide the loader.
-      document.getElementById('loader').style.display = 'none';
-    }
-  },
-  // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
-  signInFlow: 'popup',
-  signInSuccessUrl: '<url-to-redirect-to-on-success>',
-  signInOptions: [
-    // Leave the lines as is for the providers you want to offer your users.
-    firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-    firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-    firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-    firebase.auth.GithubAuthProvider.PROVIDER_ID,
-    firebase.auth.EmailAuthProvider.PROVIDER_ID,
-    firebase.auth.PhoneAuthProvider.PROVIDER_ID
-  ],
-  // Terms of service url.
-  tosUrl: '<your-tos-url>',
-  // Privacy policy url.
-  privacyPolicyUrl: '<your-privacy-policy-url>'
-};
 
 // To apply the default browser preference instead of explicitly setting it.
 // auth.useDeviceLanguage();
 
-
-const phoneNumber = getPhoneNumberFromUserInput();
-const appVerifier = window.recaptchaVerifier;
-
-const auth = getAuth();
-signInWithPhoneNumber(auth, phoneNumber, appVerifier)
-    .then((confirmationResult) => {
-      // SMS sent. Prompt user to type the code from the message, then sign the
-      // user in with confirmationResult.confirm(code).
-      window.confirmationResult = confirmationResult;
-      // ...
-    }).catch((error) => {
-      // Error; SMS not sent
-      // ...
-    });
-    grecaptcha.reset(window.recaptchaWidgetId);
-
-    // Or, if you haven't stored the widget ID:
-    window.recaptchaVerifier.render().then(function(widgetId) {
-      grecaptcha.reset(widgetId);
-    });
-    const code = getCodeFromUserInput();
-    confirmationResult.confirm(code).then((result) => {
-      // User signed in successfully.
-      const user = result.user;
-      // ...
-    }).catch((error) => {
-      // User couldn't sign in (bad verification code?)
-      // ...
-    });
 
 
 
@@ -311,56 +248,21 @@ EnhancedTableHead.propTypes = {
 };
 
 function SearchBar(props) {
-  const { searchQuery, setSearchQuery, handleOpenAdd } = props
+  const { searchQuery, setSearchQuery} = props
   return (
     <Box sx = {{width: '100%', justifyContent: 'flex-start', position: 'relative', flexDirection: 'row'}}>
       <FormControl>
-        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%'}}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid white', // Border color
-              height: '56px', // Same height as the TextField
-              minWidth: '56px',
-              backgroundColor: 'rgba(56,56,56)',
-              zIndex: 10
-            }}
-          >
-            <IconButton type="submit" aria-label="search">
-              <SearchIcon style={{ fill: "white" }} />
-            </IconButton>
-          </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', backgroundColor: '#1e1e1e', borderRadius: 2, p: 1 }}>
+          <IconButton>
+            <Search />
+          </IconButton>
           <TextField
-            id="search-bar"
-            className="text"
+            variant="standard"
+            placeholder="Search Item"
             value={searchQuery}
-            onInput={(e) => setSearchQuery(e.target.value)}
-            label="Search Item"
-            variant="outlined"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  borderColor: 'white', // Outline color
-                },
-                '&:hover fieldset': {
-                  borderColor: 'rgb(56,12,229)', // Outline color on hover
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: 'white', // Outline color when focused
-                },
-                backgroundColor: 'rgb(56,56,56)', // Background color
-              },
-              '& .MuiInputBase-input': {
-                color: 'white', // Text color
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: 'white', // Label color when focused
-              },
-              minWidth: '85%',
-              zIndex: 10
-            }}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{ disableUnderline: true }}
+            sx={{ ml: 1 }}
           />
         </Box>
       </FormControl>
@@ -459,6 +361,13 @@ export default function Home() {
     expire.setHours(0, 0, 0, 0);
     const diff = expire - today;
     return Number(Math.floor(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  const route = useRouter();
+
+  const handleLogout = () => {
+    route.push('/sign-up')
+
   }
 
 
@@ -756,27 +665,36 @@ export default function Home() {
                 onChange={() => changeColor()} 
               />
             </FormGroup>
-            {auth ? (
-              <>
-                <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
-                  Inventory <span style={{ color: '#6600ff' }}>AI</span>
-                </Typography>
-                <IconButton
-                  size="large"
-                  aria-label="account of current user"
-                  aria-controls="menu-appbar"
-                  aria-haspopup="true"
-                  onClick={handleMenu}
-                  color="inherit"
-                >
-                  <AccountCircle />
-                </IconButton>
-              </>
-            ) : (
-              <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
-                Inventory <span style={{ color: '#6600ff' }}>AI</span>
-              </Typography>
-            )}
+            <Typography variant="h5" component="div" sx={{ flexGrow: 1 }}>
+              Inventory <span style={{ color: '#6600ff' }}>AI</span>
+            </Typography>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="inherit"
+            >
+              <AccountCircle />
+            </IconButton>
+            <Menu
+                id="menu-appbar"
+                anchorEl={anchorEl}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              </Menu>
           </Toolbar>
         </AppBar>
 
@@ -993,7 +911,7 @@ export default function Home() {
           <Box
             sx ={{flexDirection: 'row', display: 'flex', width: '100%', justifyContent: 'space-between'}}
           >
-            <SearchBar setSearchQuery={setSearchQuery} searchQuery={searchQuery} handleOpenAdd={handleOpenAdd} />
+            <SearchBar setSearchQuery={setSearchQuery} searchQuery={searchQuery}/>
             <Box
               sx = {{
                 display: 'flex',

@@ -49,6 +49,7 @@ import {
   deleteDoc,
   getDoc,
 } from 'firebase/firestore'
+import { dark } from '@mui/material/styles/createPalette'
 
 const style = {
   position: 'absolute',
@@ -189,7 +190,7 @@ const headCells = [
 
 
 function EnhancedTableHead(props) {
-  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
+  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, dark } =
     props;
   const createSortHandler = (property) => (event) => {
     onRequestSort(event, property);
@@ -200,7 +201,7 @@ function EnhancedTableHead(props) {
       <TableRow>
         <TableCell padding="checkbox">
           <Checkbox
-            color="secondary"
+            sx={{ color: dark ? 'white' : 'black' }}
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
@@ -215,11 +216,13 @@ function EnhancedTableHead(props) {
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
+            sx={{ color: dark ? 'white' : 'black' }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
               direction={orderBy === headCell.id ? order : 'asc'}
               onClick={createSortHandler(headCell.id)}
+              sx={{ color: dark ? 'white' : 'black', '&.Mui-active': { color: dark ? 'white' : 'black' } }}
             >
               {headCell.label}
               {orderBy === headCell.id ? (
@@ -244,7 +247,7 @@ EnhancedTableHead.propTypes = {
   order: PropTypes.oneOf(['asc', 'desc']).isRequired,
   orderBy: PropTypes.string.isRequired,
   rowCount: PropTypes.number.isRequired,
-
+  dark: PropTypes.bool.isRequired,
 };
 
 function SearchBar(props) {
@@ -905,11 +908,17 @@ export default function Home() {
             justifyContent: 'center',
             gap: 3,
             marginTop: '10%',
-            marginBottom: '10%'
+            marginBottom: '10%',
+            width: '100%',
+            maxWidth: '100%',
+            padding: '2%',
+            borderRadius: '10px',
+            backgroundColor: dark ? theme.palette.background.default : 'white',
+            boxShadow: 24
           }}
         >
           <Box
-            sx ={{flexDirection: 'row', display: 'flex', width: '100%', justifyContent: 'space-between'}}
+            sx ={{flexDirection: 'row', display: 'flex', width: '100%', justifyContent: 'space-between', mb:4}}
           >
             <SearchBar setSearchQuery={setSearchQuery} searchQuery={searchQuery}/>
             <Box
@@ -997,6 +1006,7 @@ export default function Home() {
                     onSelectAllClick={handleSelectAllClick}
                     onRequestSort={handleRequestSort}
                     rowCount={rows.length}
+                    dark={dark} 
                   />
                   <TableBody>
                     {(
@@ -1016,11 +1026,11 @@ export default function Home() {
                           tabIndex={-1}
                           key={row.id}
                           selected={isItemSelected}
-                          sx={{ cursor: 'pointer' }}
+                          sx={{ cursor: 'pointer', color: dark ? 'white' : 'black'}}
                         >
                           <TableCell padding="checkbox">
                             <Checkbox
-                              color="secondary"
+                              sx={{ color: dark ? 'secondary' : 'black' }}
                               checked={isItemSelected}
                               inputProps={{
                                 'aria-labelledby': labelId,
@@ -1032,21 +1042,24 @@ export default function Home() {
                             id={labelId}
                             scope="row"
                             padding="none"
+                            sx ={{color: dark ? 'white' : 'black'}}
                           >
                             {row.name}
                           </TableCell>
-                          <TableCell align="right">{row.quantity}</TableCell>
-                          <TableCell align="right">{handleTimeExpire(row.expirationDate)} Days</TableCell>
+                          <TableCell align="right" sx={{ color: dark ? 'white' : 'black' }}>{row.quantity}</TableCell>
+                          <TableCell align="right" sx={{ color: dark ? 'white' : 'black' }}>{handleTimeExpire(row.expirationDate)} Days</TableCell>
                           <TableCell align="right">
                             <IconButton
                               size="small"
                               onClick={() => handleOpenEdit(row.name, row.quantity, row.expirationDate)}
+                              sx ={{color: dark ? 'white' : 'black'}} 
                             >
                               <EditIcon />
                             </IconButton>
                             <IconButton
                               size="small"
                               onClick={() => removeItem(row.name, row.quantity, row.expirationDate)}
+                              sx ={{color: dark ? 'white' : 'black'}} 
                             >
                               <RemoveIcon />
                             </IconButton>

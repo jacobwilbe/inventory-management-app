@@ -1051,7 +1051,7 @@ export default function Home() {
                           <TableCell align="right">
                             <IconButton
                               size="small"
-                              onClick={() => handleOpenEdit(row.name, row.quantity, row.expirationDate)}
+                              onClick={handleOpenEdit(row.name, row.quantity, row.expirationDate)}
                               sx ={{color: dark ? 'white' : 'black'}} 
                             >
                               <EditIcon />
